@@ -1,0 +1,9 @@
+*~
+debug/*
+release/*
+**/Debug/*
+**/Release/*
+**/.vs/*
+*.filters
+*.VC.*db
+*.user

@@ -165,6 +165,8 @@ TriMesh::readOBJ(std::string filename) {
       continue;
     switch (line[0]) {
     case 'v':
+      if (line[1] != ' ')       // we don't handle vt & vn
+        break;
       ss.str(line);
       ss.seekg(2); // skip the first two characters
       ss >> p[0] >> p[1] >> p[2];
@@ -177,7 +179,11 @@ TriMesh::readOBJ(std::string filename) {
       }
       ss.str(line);
       ss.seekg(2); // skip the first two characters
-      ss >> t[0] >> t[1] >> t[2];
+      ss >> t[0];
+      ss.ignore(line.size(), ' ');
+      ss >> t[1];
+      ss.ignore(line.size(), ' ');
+      ss >> t[2];
       result.addTriangle(t[0] - 1, t[1] - 1, t[2] - 1);
       break;
     default:

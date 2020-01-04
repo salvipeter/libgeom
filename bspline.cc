@@ -4,42 +4,78 @@
 
 namespace Geometry {
 
-BSCurve::BSCurve() {
+BSBasis::BSBasis() {
 }
 
-BSCurve::BSCurve(const PointVector &cpts)
-  : p_(cpts.size() - 1), n_(cpts.size() - 1), cp_(cpts) {
-  size_t order = cpts.size();
-  knots_.reserve(2 * order);
-  knots_.insert(knots_.end(), order, 0.0);
-  knots_.insert(knots_.end(), order, 1.0);
-}
-
-BSCurve::BSCurve(size_t degree, const DoubleVector &knots, const PointVector &cpts)
-  : p_(degree), n_(cpts.size() - 1), knots_(knots), cp_(cpts) {
+BSBasis::BSBasis(size_t degree, const DoubleVector &knots) : p_(degree), knots_(knots) {
 }
 
 size_t
-BSCurve::findSpan(double u) const {
-  if(u == knots_[n_+1])
-    return n_;
+BSBasis::degree() const {
+  return p_;
+}
+
+void
+BSBasis::setDegree(size_t degree) {
+  p_ = degree;
+}
+
+const DoubleVector &
+BSBasis::knots() const {
+  return knots_;
+}
+
+DoubleVector &
+BSBasis::knots() {
+  return knots_;
+}
+
+void
+BSBasis::reverse() {
+  size_t k = knots_.size();
+  DoubleVector new_knots;
+  new_knots.reserve(k);
+
+  double curr = knots_.front();
+  for (size_t i = 1, j = k - 1; i < k; ++i, --j) {
+    new_knots.push_back(curr);
+    curr += knots_[j] - knots_[j-1];
+  }
+  new_knots.push_back(curr);
+
+  knots_ = new_knots;
+}
+
+void
+BSBasis::normalize() {
+  size_t k = knots_.size();
+  double low = knots_.front(), high = knots_.back(), len = high - low;
+  for (size_t i = 0; i < k; ++i) {
+    knots_[i] = (knots_[i] - low) / len;
+  }
+}
+
+size_t
+BSBasis::findSpan(double u) const {
+  if(u >= knots_[knots_.size()-p_-1])
+    return knots_.size() - p_ - 2;
   return (std::upper_bound(knots_.begin() + p_ + 1, knots_.end(), u) - knots_.begin()) - 1;
 }
 
 size_t
-BSCurve::findSpanWithMultiplicity(double u, size_t &multi) const
+BSBasis::findSpanWithMultiplicity(double u, size_t &multi) const
 {
   auto range = std::equal_range(knots_.begin(), knots_.end(), u);
   multi = range.second - range.first;
 
-  if (u == knots_[n_+1])
-    return n_;
+  if (u == knots_[knots_.size()-p_-1])
+    return knots_.size() - p_ - 2;
   return (range.second - knots_.begin()) - 1;
 }
 
 
 void
-BSCurve::basisFunctions(size_t i, double u, DoubleVector &coeff) const {
+BSBasis::basisFunctions(size_t i, double u, DoubleVector &coeff) const {
   coeff.clear(); coeff.reserve(p_ + 1);
   coeff.push_back(1.0);
   DoubleVector left(p_ + 1), right(p_ + 1);
@@ -57,23 +93,7 @@ BSCurve::basisFunctions(size_t i, double u, DoubleVector &coeff) const {
 }
 
 void
-BSCurve::derivativeControlPoints(size_t d, size_t r1, size_t r2,
-                                 std::vector<PointVector> &dcp) const {
-  dcp.clear(); dcp.resize(d + 1);
-  size_t r = r2 - r1;
-  dcp[0].reserve(r + 1);
-  for(size_t i = 0; i <= r; ++i)
-    dcp[0].push_back(cp_[r1+i]);
-  for(size_t k = 1; k <= d; ++k) {
-    dcp[k].reserve(r + 1 - k);
-    size_t tmp = p_ - k + 1;
-    for(size_t i = 0; i <= r - k; ++i)
-      dcp[k].push_back((dcp[k-1][i+1] - dcp[k-1][i]) * tmp / (knots_[r1+i+p_+1] - knots_[r1+i+k]));
-  }
-}
-
-void
-BSCurve::basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const {
+BSBasis::basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const {
   coeff.clear(); coeff.resize(p_ + 1);
   coeff[0].push_back(1.0);
   DoubleVector left(p_ + 1), right(p_ + 1);
@@ -91,29 +111,70 @@ BSCurve::basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff)
   }
 }
 
+BSCurve::BSCurve() {
+}
+
+BSCurve::BSCurve(const PointVector &cpts) : n_(cpts.size() - 1), cp_(cpts) {
+  size_t order = cpts.size();
+  DoubleVector knots;
+  basis_.setDegree(order - 1);
+  basis_.knots().reserve(2 * order);
+  basis_.knots().insert(basis_.knots().end(), order, 0.0);
+  basis_.knots().insert(basis_.knots().end(), order, 1.0);
+}
+
+BSCurve::BSCurve(size_t degree, const DoubleVector &knots, const PointVector &cpts)
+  : n_(cpts.size() - 1), cp_(cpts)
+{
+  basis_.setDegree(degree);
+  basis_.knots() = knots;
+}
+
+
+void
+BSCurve::derivativeControlPoints(size_t d, size_t r1, size_t r2,
+                                 std::vector<PointVector> &dcp) const {
+  size_t p = basis_.degree();
+  const auto &knots = basis_.knots();
+  dcp.clear(); dcp.resize(d + 1);
+  size_t r = r2 - r1;
+  dcp[0].reserve(r + 1);
+  for(size_t i = 0; i <= r; ++i)
+    dcp[0].push_back(cp_[r1+i]);
+  for(size_t k = 1; k <= d; ++k) {
+    dcp[k].reserve(r + 1 - k);
+    size_t tmp = p - k + 1;
+    for(size_t i = 0; i <= r - k; ++i)
+      dcp[k].push_back((dcp[k-1][i+1] - dcp[k-1][i]) * tmp / (knots[r1+i+p+1] - knots[r1+i+k]));
+  }
+}
+
+
 Point3D
 BSCurve::eval(double u) const {
-  size_t span = findSpan(u);
-  DoubleVector coeff; basisFunctions(span, u, coeff);
+  size_t p = basis_.degree();
+  size_t span = basis_.findSpan(u);
+  DoubleVector coeff; basis_.basisFunctions(span, u, coeff);
   Point3D point(0.0, 0.0, 0.0);
-  for(size_t i = 0; i <= p_; ++i)
-    point += cp_[span - p_ + i] * coeff[i];
+  for(size_t i = 0; i <= p; ++i)
+    point += cp_[span - p + i] * coeff[i];
   return point;
 }
 
 Point3D
 BSCurve::eval(double u, size_t nr_der, VectorVector &der) const {
-  size_t du = std::min(nr_der, p_);
+  size_t p = basis_.degree();
+  size_t du = std::min(nr_der, p);
   der.clear();
-  size_t span = findSpan(u);
-  std::vector<DoubleVector> coeff; basisFunctionsAll(span, u, coeff);
-  std::vector<PointVector> dcp; derivativeControlPoints(du, span - p_, span, dcp);
+  size_t span = basis_.findSpan(u);
+  std::vector<DoubleVector> coeff; basis_.basisFunctionsAll(span, u, coeff);
+  std::vector<PointVector> dcp; derivativeControlPoints(du, span - p, span, dcp);
   for(size_t k = 0; k <= du; ++k) {
     der.push_back(Vector3D(0.0, 0.0, 0.0));
-    for(size_t j = 0; j <= p_ - k; ++j)
-      der[k] += dcp[k][j] * coeff[p_-k][j];
+    for(size_t j = 0; j <= p - k; ++j)
+      der[k] += dcp[k][j] * coeff[p-k][j];
   }
-  for(size_t k = p_ + 1; k <= nr_der; ++k)
+  for(size_t k = p + 1; k <= nr_der; ++k)
     der.push_back(Vector3D(0.0, 0.0, 0.0));
   return der[0];
 }
@@ -130,37 +191,24 @@ BSCurve::controlPoints() {
 
 void
 BSCurve::reverse() {
-  size_t k = knots_.size();
-  DoubleVector new_knots;
-  new_knots.reserve(k);
-
-  double curr = knots_.front();
-  for (size_t i = 1, j = k - 1; i < k; ++i, --j) {
-    new_knots.push_back(curr);
-    curr += knots_[j] - knots_[j-1];
-  }
-  new_knots.push_back(curr);
-
-  knots_ = new_knots;
+  basis_.reverse();
   std::reverse(cp_.begin(), cp_.end());
 }
 
 void
 BSCurve::normalize() {
-  size_t k = knots_.size();
-  double low = knots_.front(), high = knots_.back(), len = high - low;
-  for (size_t i = 0; i < k; ++i) {
-    knots_[i] = (knots_[i] - low) / len;
-  }
+  basis_.normalize();
 }
 
 double
 BSCurve::arcLength(double from, double to) const {
-  if (to > knots_[knots_.size() - p_ - 1])
-    to = knots_[knots_.size() - p_ - 1];
+  size_t p = basis_.degree();
+  const auto &knots = basis_.knots();
+  if (to > knots[knots.size() - p - 1])
+    to = knots[knots.size() - p - 1];
   if (from >= to)
     return 0.0;
-  double next = std::min(to, knots_[findSpan(from) + 1]);
+  double next = std::min(to, knots[basis_.findSpan(from) + 1]);
 
   // Estimate each knot interval using Gaussian quadratures
   const static double gauss[] = {-0.861136312, 0.347854845,
@@ -181,32 +229,35 @@ BSCurve::arcLength(double from, double to) const {
 
 BSCurve
 BSCurve::insertKnot(double u, size_t k, size_t s, size_t r) const {
-  BSCurve result;
-  result.p_ = p_; result.n_ = n_ + r;
+  size_t p = basis_.degree();
+  const auto &knots = basis_.knots();
 
-  result.knots_.reserve(knots_.size() + r);
-  std::copy_n(knots_.begin(), k + 1, std::back_inserter(result.knots_));
-  std::fill_n(std::back_inserter(result.knots_), r, u);
-  std::copy(knots_.begin() + k + 1, knots_.end(), std::back_inserter(result.knots_));
+  BSCurve result;
+  result.basis_.setDegree(p); result.n_ = n_ + r;
+
+  result.basis_.knots().reserve(knots.size() + r);
+  std::copy_n(knots.begin(), k + 1, std::back_inserter(result.basis_.knots()));
+  std::fill_n(std::back_inserter(result.basis_.knots()), r, u);
+  std::copy(knots.begin() + k + 1, knots.end(), std::back_inserter(result.basis_.knots()));
 
   result.cp_.resize(cp_.size() + r);
-  std::copy_n(cp_.begin(), k - p_ + 1, result.cp_.begin());
+  std::copy_n(cp_.begin(), k - p + 1, result.cp_.begin());
   std::copy(cp_.begin() + k - s, cp_.end(), result.cp_.begin() + r + k - s);
 
-  PointVector tmp; tmp.reserve(p_ - s + 1);
+  PointVector tmp; tmp.reserve(p - s + 1);
 
-  std::copy_n(cp_.begin() + k - p_, p_ - s + 1, std::back_inserter(tmp));
+  std::copy_n(cp_.begin() + k - p, p - s + 1, std::back_inserter(tmp));
 
-  size_t L = k - p_ + 1;
+  size_t L = k - p + 1;
   for (size_t j = 1; j <= r; ++j, ++L) {
-    for (size_t i = 0; i <= p_ - j - s; ++i) {
-      double alpha = (u - knots_[L+i]) / (knots_[i+k+1] - knots_[L+i]);
+    for (size_t i = 0; i <= p - j - s; ++i) {
+      double alpha = (u - knots[L+i]) / (knots[i+k+1] - knots[L+i]);
       tmp[i] = tmp[i+1] * alpha + tmp[i] * (1.0 - alpha);
     }
     result.cp_[L] = tmp[0];
-    result.cp_[k+r-j-s] = tmp[p_-j-s];
+    result.cp_[k+r-j-s] = tmp[p-j-s];
   }
-  std::copy_n(tmp.begin() + 1, p_ - s - 1 - r, result.cp_.begin() + L);
+  std::copy_n(tmp.begin() + 1, p - s - 1 - r, result.cp_.begin() + L);
 
   return result;
 }
@@ -214,8 +265,8 @@ BSCurve::insertKnot(double u, size_t k, size_t s, size_t r) const {
 BSCurve
 BSCurve::insertKnot(double u, size_t r) const {
   size_t s;
-  size_t k = findSpanWithMultiplicity(u, s);
-  r = std::min(r, p_ - s);
+  size_t k = basis_.findSpanWithMultiplicity(u, s);
+  r = std::min(r, basis_.degree() - s);
   return insertKnot(u, k, s, r);
 }
 
@@ -224,6 +275,8 @@ BSCurve::intersectWithPlane(const Point3D &p, const Vector3D &n) const {
   DoubleVector result;
   BSCurve c = *this;
   for (size_t k = 1; k <= c.n_; ++k) {
+    size_t deg = c.basis().degree();
+    const auto &knots = c.basis().knots();
     double d1 = (c.cp_[k-1] - p) * n;
     double d2 = (c.cp_[k]   - p) * n;
     if (d1 * d2 <= 0.0) {
@@ -232,13 +285,13 @@ BSCurve::intersectWithPlane(const Point3D &p, const Vector3D &n) const {
            (k == c.n_ && d2 == 0.0) ||
            (k < c.n_  && (c.cp_[k+1] - p) * n == 0)))
         continue;
-      double k1 = c.knots_[k], k2 = c.knots_[k+c.p_];
+      double k1 = knots[k], k2 = knots[k+deg];
       double g1 = k1, g2 = k2;
-      for (size_t l = k + 1, le = k + c.p_; l != le; ++l) {
-        g1 += c.knots_[l];
-        g2 += c.knots_[l];
+      for (size_t l = k + 1, le = k + deg; l != le; ++l) {
+        g1 += knots[l];
+        g2 += knots[l];
       }
-      g1 /= c.p_; g2 /= c.p_;
+      g1 /= deg; g2 /= deg;
       double ratio = d1 == 0.0 && d2 == 0.0
         ? (g1 == k1 ? 0.0 : (g2 == k2 ? 1.0 : 0.5))
         : std::abs(d1 / (d1 - d2));
@@ -252,7 +305,7 @@ BSCurve::intersectWithPlane(const Point3D &p, const Vector3D &n) const {
         }
       } else {
         size_t old_size = c.n_;
-        c = c.insertKnot(new_knot, c.p_ - 1);
+        c = c.insertKnot(new_knot, deg - 1);
         if (c.n_ != old_size)
           --k;
       }

@@ -126,6 +126,33 @@ private:
   std::array<double, 9> m_;
 };
 
+class BSBasis {
+public:
+  // Constructors
+  BSBasis();
+  BSBasis(const BSBasis &) = default;
+  BSBasis(size_t degree, const DoubleVector &knots);
+  BSBasis &operator=(const BSBasis &) = default;
+
+  // Properties
+  size_t degree() const;
+  void setDegree(size_t degree);
+  const DoubleVector &knots() const;
+  DoubleVector &knots();
+
+  // Utilities
+  void reverse();
+  void normalize();
+  size_t findSpan(double u) const;
+  size_t findSpanWithMultiplicity(double u, size_t &multi) const;
+  void basisFunctions(size_t i, double u, DoubleVector &coeff) const;
+  void basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const;
+
+private:
+  size_t p_;
+  DoubleVector knots_;
+};
+
 class BSCurve {
 public:
   // Constructors
@@ -144,6 +171,7 @@ public:
   PointVector &controlPoints();
 
   // Parameterization
+  const BSBasis &basis() const;
   void reverse();
   void normalize();
 
@@ -153,16 +181,11 @@ public:
   DoubleVector intersectWithPlane(const Point3D &p, const Vector3D &n) const;
 
 private:
-  size_t findSpan(double u) const;
-  size_t findSpanWithMultiplicity(double u, size_t &multi) const;
-  BSCurve insertKnot(double u, size_t k, size_t s, size_t r) const;
-  void basisFunctions(size_t i, double u, DoubleVector &coeff) const;
-  void basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const;
   void derivativeControlPoints(size_t d, size_t r1, size_t r2, std::vector<PointVector> &dcp) const;
+  BSCurve insertKnot(double u, size_t k, size_t s, size_t r) const;
 
-  size_t p_;
   size_t n_;
-  DoubleVector knots_;
+  BSBasis basis_;
   PointVector cp_;
 };
 

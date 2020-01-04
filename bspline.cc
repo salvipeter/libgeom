@@ -189,6 +189,11 @@ BSCurve::controlPoints() {
   return cp_;
 }
 
+const BSBasis &
+BSCurve::basis() const {
+  return basis_;
+}
+
 void
 BSCurve::reverse() {
   basis_.reverse();

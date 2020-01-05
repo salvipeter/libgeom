@@ -139,6 +139,8 @@ public:
   void setDegree(size_t degree);
   const DoubleVector &knots() const;
   DoubleVector &knots();
+  double low() const;
+  double high() const;
 
   // Utilities
   void reverse();

@@ -30,6 +30,16 @@ BSBasis::knots() {
   return knots_;
 }
 
+double
+BSBasis::low() const {
+  return knots_[p_];
+}
+
+double
+BSBasis::high() const {
+  return knots_[knots_.size()-p_-1];
+}
+
 void
 BSBasis::reverse() {
   size_t k = knots_.size();

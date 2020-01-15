@@ -19,10 +19,15 @@ class BSCurve;
 using Point2D = Vector2D;
 using Point3D = Vector3D;
 using DoubleVector = std::vector<double>;
+using DoubleMatrix = std::vector<DoubleVector>;
 using Vector2DVector = std::vector<Vector2D>;
+using Vector2DMatrix = std::vector<Vector2DVector>;
 using VectorVector = std::vector<Vector3D>;
+using VectorMatrix = std::vector<VectorVector>;
 using Point2DVector = std::vector<Point2D>;
+using Point2DMatrix = std::vector<Point2DVector>;
 using PointVector = std::vector<Point3D>;
+using PointMatrix = std::vector<PointVector>;
 using CurveVector = std::vector<std::shared_ptr<BSCurve>>;
 
 class Vector2D {
@@ -148,7 +153,8 @@ public:
   size_t findSpan(double u) const;
   size_t findSpanWithMultiplicity(double u, size_t &multi) const;
   void basisFunctions(size_t i, double u, DoubleVector &coeff) const;
-  void basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const;
+  void basisFunctionsAll(size_t i, double u, DoubleMatrix &coeff) const;
+  void basisFunctionDerivatives(size_t i, double u, size_t nr_der, DoubleMatrix &coeff) const;
 
 private:
   size_t p_;
@@ -183,7 +189,6 @@ public:
   DoubleVector intersectWithPlane(const Point3D &p, const Vector3D &n) const;
 
 private:
-  void derivativeControlPoints(size_t d, size_t r1, size_t r2, std::vector<PointVector> &dcp) const;
   BSCurve insertKnot(double u, size_t k, size_t s, size_t r) const;
 
   size_t n_;

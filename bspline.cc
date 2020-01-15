@@ -103,7 +103,7 @@ BSBasis::basisFunctions(size_t i, double u, DoubleVector &coeff) const {
 }
 
 void
-BSBasis::basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff) const {
+BSBasis::basisFunctionsAll(size_t i, double u, DoubleMatrix &coeff) const {
   coeff.clear(); coeff.resize(p_ + 1);
   coeff[0].push_back(1.0);
   DoubleVector left(p_ + 1), right(p_ + 1);
@@ -118,6 +118,59 @@ BSBasis::basisFunctionsAll(size_t i, double u, std::vector<DoubleVector> &coeff)
       saved = tmp * left[j-r];
     }
     coeff[j].push_back(saved);
+  }
+}
+
+void
+BSBasis::basisFunctionDerivatives(size_t i, double u, size_t nr_der, DoubleMatrix &coeff) const {
+  coeff.clear(); coeff.resize(nr_der + 1);
+  DoubleMatrix ndu(p_ + 1);
+  ndu[0].push_back(1);
+  DoubleVector left(p_ + 1), right(p_ + 1);
+  for (size_t j = 1; j <= p_; ++j) {
+    left[j] = u - knots_[i+1-j];
+    right[j] = knots_[i+j] - u;
+    double saved = 0;
+    for (size_t r = 0; r < j; ++r) {
+      ndu[j].push_back(right[r+1] + left[j-r]);
+      double tmp = ndu[r][j-1] / ndu[j][r];
+      ndu[r].push_back(saved + right[r+1] * tmp);
+      saved = tmp * left[j-r];
+    }
+    ndu[j].push_back(saved);
+  }
+  for (size_t j = 0; j <= p_; ++j)
+    coeff[0].push_back(ndu[j][p_]);
+  DoubleVector a[2]; a[0].resize(p_ + 1); a[1].resize(p_ + 1);
+  for (size_t r = 0; r <= p_; ++r) {
+    size_t s1 = 0, s2 = 1;
+    a[0][0] = 1;
+    for (size_t k = 1; k <= nr_der; ++k) {
+      double d = 0;
+      size_t pk = p_ - k;
+      if (r >= k) {
+        a[s2][0] = a[s1][0] / ndu[pk+1][r-k];
+        d = a[s2][0] * ndu[r-k][pk];
+      }
+      size_t j1 = r >= k - 1 ? 1 : k - r;
+      size_t j2 = r <= pk + 1 ? k - 1 : p_ - r;
+      for (size_t j = j1; j <= j2; ++j) {
+        a[s2][j] = (a[s1][j] - a[s1][j-1]) / ndu[pk+1][r+j-k];
+        d += a[s2][j] * ndu[r+j-k][pk];
+      }
+      if (r <= pk) {
+        a[s2][k] = -a[s1][k-1] / ndu[pk+1][r];
+        d += a[s2][k] * ndu[r][pk];
+      }
+      coeff[k].push_back(d);
+      std::swap(s1, s2);
+    }
+  }
+  size_t r = p_;
+  for (size_t k = 1; k <= nr_der; ++k) {
+    for (size_t j = 0; j <= p_; ++j)
+      coeff[k][j] *= r;
+    r *= p_ - k;
   }
 }
 
@@ -140,26 +193,6 @@ BSCurve::BSCurve(size_t degree, const DoubleVector &knots, const PointVector &cp
   basis_.knots() = knots;
 }
 
-
-void
-BSCurve::derivativeControlPoints(size_t d, size_t r1, size_t r2,
-                                 std::vector<PointVector> &dcp) const {
-  size_t p = basis_.degree();
-  const auto &knots = basis_.knots();
-  dcp.clear(); dcp.resize(d + 1);
-  size_t r = r2 - r1;
-  dcp[0].reserve(r + 1);
-  for(size_t i = 0; i <= r; ++i)
-    dcp[0].push_back(cp_[r1+i]);
-  for(size_t k = 1; k <= d; ++k) {
-    dcp[k].reserve(r + 1 - k);
-    size_t tmp = p - k + 1;
-    for(size_t i = 0; i <= r - k; ++i)
-      dcp[k].push_back((dcp[k-1][i+1] - dcp[k-1][i]) * tmp / (knots[r1+i+p+1] - knots[r1+i+k]));
-  }
-}
-
-
 Point3D
 BSCurve::eval(double u) const {
   size_t p = basis_.degree();
@@ -177,15 +210,14 @@ BSCurve::eval(double u, size_t nr_der, VectorVector &der) const {
   size_t du = std::min(nr_der, p);
   der.clear();
   size_t span = basis_.findSpan(u);
-  std::vector<DoubleVector> coeff; basis_.basisFunctionsAll(span, u, coeff);
-  std::vector<PointVector> dcp; derivativeControlPoints(du, span - p, span, dcp);
+  std::vector<DoubleVector> coeff; basis_.basisFunctionDerivatives(span, u, du, coeff);
   for(size_t k = 0; k <= du; ++k) {
-    der.push_back(Vector3D(0.0, 0.0, 0.0));
-    for(size_t j = 0; j <= p - k; ++j)
-      der[k] += dcp[k][j] * coeff[p-k][j];
+    der.emplace_back(0.0, 0.0, 0.0);
+    for(size_t j = 0; j <= p; ++j)
+      der[k] += cp_[span-p+j] * coeff[k][j];
   }
   for(size_t k = p + 1; k <= nr_der; ++k)
-    der.push_back(Vector3D(0.0, 0.0, 0.0));
+    der.emplace_back(0.0, 0.0, 0.0);
   return der[0];
 }
 

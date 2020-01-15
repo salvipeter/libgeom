@@ -361,4 +361,149 @@ BSCurve::intersectWithPlane(const Point3D &p, const Vector3D &n) const {
   return result;
 }
 
+BSSurface::BSSurface() {
+}
+
+BSSurface::BSSurface(size_t deg_u, size_t deg_v, const PointVector &cpts)
+  : n_u_(deg_u), n_v_(deg_v), cp_(cpts)
+{
+  basis_u_.setDegree(deg_u);
+  basis_v_.setDegree(deg_v);
+  basis_u_.knots().reserve(2 * (deg_u + 1));
+  basis_u_.knots().insert(basis_u_.knots().end(), deg_u + 1, 0.0);
+  basis_u_.knots().insert(basis_u_.knots().end(), deg_u + 1, 1.0);
+  basis_v_.knots().reserve(2 * (deg_v + 1));
+  basis_v_.knots().insert(basis_u_.knots().end(), deg_v + 1, 0.0);
+  basis_v_.knots().insert(basis_u_.knots().end(), deg_v + 1, 1.0);
+}
+
+BSSurface::BSSurface(size_t deg_u, size_t deg_v,
+                     const DoubleVector &knots_u, const DoubleVector &knots_v,
+                     const PointVector &cpts)
+  : n_u_(knots_u.size() - deg_u - 2), n_v_(knots_v.size() - deg_v - 2), cp_(cpts)
+{
+  basis_u_.setDegree(deg_u);
+  basis_v_.setDegree(deg_v);
+  basis_u_.knots() = knots_u;
+  basis_v_.knots() = knots_v;
+}
+
+Point3D
+BSSurface::eval(double u, double v) const {
+  size_t p_u = basis_u_.degree(), p_v = basis_v_.degree();
+  size_t span_u = basis_u_.findSpan(u), span_v = basis_v_.findSpan(v);
+  DoubleVector coeff_u, coeff_v;
+  basis_u_.basisFunctions(span_u, u, coeff_u);
+  basis_v_.basisFunctions(span_v, v, coeff_v);
+  Point3D point(0.0, 0.0, 0.0);
+  for (size_t i = 0; i <= p_u; ++i) {
+    size_t base = (span_u - p_u + i) * (n_v_ + 1);
+    for (size_t j = 0; j <= p_v; ++j)
+      point += cp_[base+span_v-p_v+j] * coeff_u[i] * coeff_v[j];
+  }
+  return point;
+}
+
+Point3D
+BSSurface::eval(double u, double v, size_t nr_der, VectorMatrix &der) const {
+  der.clear(); der.resize(nr_der + 1);
+  size_t p_u = basis_u_.degree(), p_v = basis_v_.degree();
+  size_t du = std::min(nr_der, p_u), dv = std::min(nr_der, p_v);
+  size_t span_u = basis_u_.findSpan(u), span_v = basis_v_.findSpan(v);
+  DoubleMatrix coeff_u, coeff_v;
+  basis_u_.basisFunctionDerivatives(span_u, u, du, coeff_u);
+  basis_v_.basisFunctionDerivatives(span_v, v, dv, coeff_v);
+  VectorVector tmp(p_v + 1);
+  for (size_t k = 0; k <= du; ++k) {
+    for (size_t s = 0; s <= p_v; ++s) {
+      tmp[s] = Vector3D(0.0, 0.0, 0.0);
+      for (size_t r = 0; r <= p_u; ++r)
+        tmp[s] += cp_[(span_u-p_u+r)*(n_v_+1)+span_v-p_v+s] * coeff_u[k][r];
+    }
+    size_t dd = std::min(nr_der - k, dv);
+    for (size_t l = 0; l <= dd; ++l) {
+      Vector3D point(0.0, 0.0, 0.0);
+      for (size_t s = 0; s <= p_v; ++s)
+        point += tmp[s] * coeff_v[l][s];
+      der[k].push_back(point);
+    }
+  }
+  for (size_t k = p_u + 1; k <= nr_der; ++k)
+    for (size_t l = 0; l <= nr_der - k; ++l)
+      der[k].emplace_back(0.0, 0.0, 0.0);
+  for (size_t l = p_v + 1; l <= nr_der; ++l)
+    for (size_t k = 0; k <= nr_der - l; ++k)
+      der[k].emplace_back(0.0, 0.0, 0.0);
+  return der[0][0];
+}
+
+const PointVector &
+BSSurface::controlPoints() const {
+  return cp_;
+}
+
+std::array<size_t, 2>
+BSSurface::numControlPoints() const {
+  return { n_u_ + 1, n_v_ + 1 };
+}
+
+Point3D
+BSSurface::controlPoint(size_t i, size_t j) const {
+  return cp_[i*(n_v_+1)+j];
+}
+
+Point3D &
+BSSurface::controlPoint(size_t i, size_t j) {
+  return cp_[i*(n_v_+1)+j];
+}
+
+PointVector &
+BSSurface::controlPoints() {
+  return cp_;
+}
+
+const BSBasis &
+BSSurface::basisU() const {
+  return basis_u_;
+}
+
+const BSBasis &
+BSSurface::basisV() const {
+  return basis_v_;
+}
+
+void
+BSSurface::swapUV() {
+  std::swap(n_u_, n_v_);
+  std::swap(basis_u_, basis_v_);
+  auto cp_old = cp_;
+  for (size_t i = 0, index = 0; i <= n_u_; ++i)
+    for (size_t j = 0; j <= n_v_; ++j, ++index)
+      cp_[index] = cp_old[j*(n_u_+1)+i];
+}
+
+void
+BSSurface::reverseU() {
+  basis_u_.reverse();
+  for (size_t i = 0; i < (n_u_ + 1) / 2; ++i) {
+    size_t i2 = n_u_ - i;
+    for (size_t j = 0; j <= n_v_; ++j)
+      std::swap(cp_[i*(n_v_+1)+j], cp_[i2*(n_v_+1)+j]);
+  }
+}
+
+void BSSurface::reverseV() {
+  basis_v_.reverse();
+  for (size_t i = 0; i <= n_u_; ++i) {
+    size_t base = i * (n_v_ + 1);
+    for (size_t j = 0; j < (n_v_ + 1) / 2; ++j)
+      std::swap(cp_[base+j], cp_[base+n_v_-j]);
+  }
+}
+
+void BSSurface::normalize() {
+  basis_u_.normalize();
+  basis_v_.normalize();
+}
+
 } // namespace Geometry

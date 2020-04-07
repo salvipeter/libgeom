@@ -1,7 +1,5 @@
 #pragma once
 
-#define NO_SURFACE_FIT
-
 #include <array>
 #include <iostream>
 #include <list>

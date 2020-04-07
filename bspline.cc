@@ -313,9 +313,9 @@ BSCurve
 BSCurve::insertKnot(double u, size_t r) const {
   size_t s;
   size_t k = basis_.findSpanWithMultiplicity(u, s);
-  r = std::min(r, basis_.degree() - s);
-  if (r <= 0)
+  if (s >= basis_.degree())
     return *this;
+  r = std::min(r, basis_.degree() - s);
   return insertKnot(u, k, s, r);
 }
 

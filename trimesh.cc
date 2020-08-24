@@ -204,20 +204,13 @@ TriMesh::writeOBJ(std::string filename) const {
 }
 
 TriMesh &
-TriMesh::append(const TriMesh& other)
-{
-	size_t pointNum = points().size();
-	Geometry::PointVector coonsPoints = points();
-	for (auto it : other.points())
-	{
-		coonsPoints.push_back(it);
-	}
-	setPoints(coonsPoints);
-	for (auto it : other.triangles())
-	{
-		addTriangle(it[0] + pointNum, it[1] + pointNum, it[2] + pointNum);
-	}
-	return *this;
+TriMesh::append(const TriMesh& other) {
+  size_t n = points_.size();
+  for (const auto &p : other.points())
+    points_.push_back(p);
+  for (const auto &tri : other.triangles())
+    addTriangle(n + tri[0], n + tri[1], n + tri[2]);
+  return *this;
 }
 
 } // namespace Geometry

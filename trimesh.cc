@@ -213,4 +213,29 @@ TriMesh::append(const TriMesh& other) {
   return *this;
 }
 
+TriMesh &
+TriMesh::insert(const TriMesh& other, double tolerance) {
+  tolerance *= tolerance;
+  const auto &pts = other.points();
+  size_t n = points_.size(), m = pts.size();
+  std::vector<size_t> vertex_map(m);
+  size_t next = n;
+  for (size_t j = 0; j < m; ++j) {
+    bool found = false;
+    for (size_t i = 0; i < n; ++i)
+      if ((points_[i] - pts[j]).normSqr() <= tolerance) {
+        found = true;
+        vertex_map[j] = i;
+        break;
+      }
+    if (!found) {
+      points_.push_back(pts[j]);
+      vertex_map[j] = next++;
+    }
+  }
+  for (const auto &tri : other.triangles())
+    addTriangle(vertex_map[tri[0]], vertex_map[tri[1]], vertex_map[tri[2]]);
+  return *this;
+}
+
 } // namespace Geometry

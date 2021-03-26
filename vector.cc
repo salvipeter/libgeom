@@ -103,6 +103,11 @@ Vector2D::normalize() {
   return operator*=(1.0 / norm());
 }
 
+Vector2D
+Vector2D::normalized() const {
+  return Vector2D(*this).normalize();
+}
+
 std::ostream &operator<<(std::ostream &os, const Vector2D &v) {
   os << v[0] << ' ' << v[1];
   return os;
@@ -221,6 +226,11 @@ Vector3D::normSqr() const {
 Vector3D &
 Vector3D::normalize() {
   return operator*=(1.0 / norm());
+}
+
+Vector3D
+Vector3D::normalized() const {
+  return Vector3D(*this).normalize();
 }
 
 std::ostream &operator<<(std::ostream &os, const Vector3D &v) {

@@ -58,6 +58,7 @@ public:
   double norm() const;
   double normSqr() const;
   Vector2D &normalize();
+  Vector2D normalized() const;
 
 private:
   std::array<double, 2> v_;
@@ -97,6 +98,7 @@ public:
   double norm() const;
   double normSqr() const;
   Vector3D &normalize();
+  Vector3D normalized() const;
 
 private:
   std::array<double, 3> v_;

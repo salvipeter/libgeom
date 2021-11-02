@@ -1,8 +1,13 @@
+#include <algorithm>
 #include <cmath>
 
 #include "geometry.hh"
 
 namespace Geometry {
+
+Matrix3x3::Matrix3x3(const double *values) {
+  std::copy_n(values, 9, m_.begin());
+}
 
 Matrix3x3
 Matrix3x3::identity() {
@@ -85,6 +90,28 @@ Matrix3x3 &
 Matrix3x3::operator*=(const Matrix3x3 &m) {
   *this = (*this) * m;
   return *this;
+}
+
+double Matrix3x3::trace() const {
+  return m_[0] + m_[4] + m_[8];
+}
+
+Matrix3x3 Matrix3x3::adjugate() const {
+  Matrix3x3 r;
+
+  r.m_[0] = m_[4] * m_[8] - m_[5] * m_[7];
+  r.m_[1] = m_[2] * m_[7] - m_[1] * m_[8];
+  r.m_[2] = m_[1] * m_[5] - m_[2] * m_[4];
+
+  r.m_[3] = m_[5] * m_[6] - m_[3] * m_[8];
+  r.m_[4] = m_[0] * m_[8] - m_[2] * m_[6];
+  r.m_[5] = m_[3] * m_[2] - m_[0] * m_[5];
+
+  r.m_[6] = m_[3] * m_[7] - m_[4] * m_[6];
+  r.m_[7] = m_[1] * m_[6] - m_[0] * m_[7];
+  r.m_[8] = m_[0] * m_[4] - m_[1] * m_[3];
+
+  return r;
 }
 
 Matrix3x3 Matrix3x3::inverse() const

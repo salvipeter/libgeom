@@ -7,6 +7,11 @@ namespace Geometry {
 Vector2D::Vector2D() {
 }
 
+Vector2D::Vector2D(const double *coords) {
+  v_[0] = coords[0];
+  v_[1] = coords[1];
+}
+
 Vector2D::Vector2D(double x, double y)
   : v_({x,y}) {
 }
@@ -119,6 +124,12 @@ std::istream &operator>>(std::istream &is, Vector2D &v) {
 }
 
 Vector3D::Vector3D() {
+}
+
+Vector3D::Vector3D(const double *coords) {
+  v_[0] = coords[0];
+  v_[1] = coords[1];
+  v_[2] = coords[2];
 }
 
 Vector3D::Vector3D(double x, double y, double z)

@@ -32,6 +32,7 @@ class Vector2D {
 public:
   // Constructors
   Vector2D();
+  explicit Vector2D(const double *coords);
   Vector2D(double x, double y);
 
   // Assignments
@@ -71,6 +72,7 @@ class Vector3D {
 public:
   // Constructors
   Vector3D();
+  explicit Vector3D(const double *coords);
   Vector3D(double x, double y, double z);
 
   // Assignments
@@ -109,6 +111,10 @@ std::istream &operator>>(std::istream &is, Vector3D &v);
 
 class Matrix3x3 {
 public:
+  // Constructors
+  Matrix3x3() = default;
+  explicit Matrix3x3(const double *values); // row-major
+
   // Special matrices
   static Matrix3x3 identity();
   static Matrix3x3 rotation(const Vector3D &axis, double angle);
@@ -125,6 +131,8 @@ public:
   Matrix3x3 operator*(const Matrix3x3 &m) const;
   Matrix3x3 &operator*=(const Matrix3x3 &m);
 
+  double trace() const;
+  Matrix3x3 adjugate() const;
   Matrix3x3 inverse() const;
 
 private:

@@ -242,7 +242,7 @@ public:
   void addTriangle(size_t a, size_t b, size_t c);
   void setTriangles(const std::list<Triangle> &tl);
   TriMesh &append(const TriMesh &other);
-  TriMesh & insert(const TriMesh& other, double tolerance);
+  TriMesh &insert(const TriMesh &other, double tolerance);
 
   // I/O
   Point3D &operator[](size_t i);

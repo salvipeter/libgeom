@@ -304,7 +304,8 @@ BSCurve::insertKnot(double u, size_t k, size_t s, size_t r) const {
     result.cp_[L] = tmp[0];
     result.cp_[k+r-j-s] = tmp[p-j-s];
   }
-  std::copy_n(tmp.begin() + 1, p - s - 1 - r, result.cp_.begin() + L);
+  if (p > s + r + 1)
+    std::copy_n(tmp.begin() + 1, p - s - 1 - r, result.cp_.begin() + L);
 
   return result;
 }

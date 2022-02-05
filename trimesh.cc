@@ -204,7 +204,7 @@ TriMesh::writeOBJ(std::string filename) const {
 }
 
 TriMesh &
-TriMesh::append(const TriMesh& other) {
+TriMesh::append(const TriMesh &other) {
   size_t n = points_.size();
   for (const auto &p : other.points())
     points_.push_back(p);
@@ -214,7 +214,7 @@ TriMesh::append(const TriMesh& other) {
 }
 
 TriMesh &
-TriMesh::insert(const TriMesh& other, double tolerance) {
+TriMesh::insert(const TriMesh &other, double tolerance) {
   tolerance *= tolerance;
   const auto &pts = other.points();
   size_t n = points_.size(), m = pts.size();

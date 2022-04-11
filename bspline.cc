@@ -376,8 +376,8 @@ BSSurface::BSSurface(size_t deg_u, size_t deg_v, const PointVector &cpts)
   basis_u_.knots().insert(basis_u_.knots().end(), deg_u + 1, 0.0);
   basis_u_.knots().insert(basis_u_.knots().end(), deg_u + 1, 1.0);
   basis_v_.knots().reserve(2 * (deg_v + 1));
-  basis_v_.knots().insert(basis_u_.knots().end(), deg_v + 1, 0.0);
-  basis_v_.knots().insert(basis_u_.knots().end(), deg_v + 1, 1.0);
+  basis_v_.knots().insert(basis_v_.knots().end(), deg_v + 1, 0.0);
+  basis_v_.knots().insert(basis_v_.knots().end(), deg_v + 1, 1.0);
 }
 
 BSSurface::BSSurface(size_t deg_u, size_t deg_v,

@@ -121,6 +121,7 @@ public:
 
   const double &operator()(size_t i, size_t j) const;
   double &operator()(size_t i, size_t j);
+  const double *data() const;
 
   // Arithmetic
   Matrix3x3 operator+(const Matrix3x3 &m) const;

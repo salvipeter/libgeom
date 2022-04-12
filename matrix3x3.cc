@@ -114,8 +114,7 @@ Matrix3x3 Matrix3x3::adjugate() const {
   return r;
 }
 
-Matrix3x3 Matrix3x3::inverse() const
-{
+Matrix3x3 Matrix3x3::inverse() const {
   double det00 = m_[4] * m_[8] - m_[7] * m_[5];
   double det01 = m_[5] * m_[6] - m_[3] * m_[8];
   double det02 = m_[3] * m_[7] - m_[4] * m_[6];
@@ -139,14 +138,17 @@ Matrix3x3 Matrix3x3::inverse() const
   return result;
 }
 
-const double &Matrix3x3::operator()(size_t i, size_t j) const
-{
+const double &Matrix3x3::operator()(size_t i, size_t j) const {
   return m_[i * 3 + j];
 }
 
-double &Matrix3x3::operator()(size_t i, size_t j)
-{
+double &Matrix3x3::operator()(size_t i, size_t j) {
   return m_[i * 3 + j];
 }
+
+const double *Matrix3x3::data() const {
+  return &m_[0];
+}
+
 
 } // namespace Geometry

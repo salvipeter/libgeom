@@ -234,7 +234,14 @@ public:
   void reverseV();
   void normalize();
 
+  // Algorithms
+  BSSurface insertKnotU(double u, size_t r) const;
+  BSSurface insertKnotV(double v, size_t r) const;
+
 private:
+  BSSurface insertKnotU(double u, size_t k, size_t s, size_t r) const;
+  BSSurface insertKnotV(double v, size_t k, size_t s, size_t r) const;
+
   size_t n_u_, n_v_;
   BSBasis basis_u_, basis_v_;
   PointVector cp_;

@@ -509,4 +509,76 @@ void BSSurface::normalize() {
   basis_v_.normalize();
 }
 
+BSSurface
+BSSurface::insertKnotU(double u, size_t k, size_t s, size_t r) const {
+  size_t p = basis_u_.degree();
+  const auto &knots = basis_u_.knots();
+
+  BSSurface result;
+  result.basis_v_ = basis_v_;
+  result.n_v_ = n_v_;
+
+  result.basis_u_.setDegree(p); result.n_u_ = n_u_ + r;
+
+  result.basis_u_.knots().reserve(knots.size() + r);
+  std::copy_n(knots.begin(), k + 1, std::back_inserter(result.basis_u_.knots()));
+  std::fill_n(std::back_inserter(result.basis_u_.knots()), r, u);
+  std::copy(knots.begin() + k + 1, knots.end(), std::back_inserter(result.basis_u_.knots()));
+
+  size_t ncol = n_v_ + 1;
+  result.cp_.resize((n_u_ + r + 1) * ncol);
+  std::copy_n(cp_.begin(), (k - p + 1) * ncol, result.cp_.begin());
+  std::copy(cp_.begin() + (k - s) * ncol, cp_.end(), result.cp_.begin() + (r + k - s) * ncol);
+
+  PointVector tmp; tmp.reserve((p - s + 1) * ncol);
+
+  std::copy_n(cp_.begin() + (k - p) * ncol, (p - s + 1) * ncol, std::back_inserter(tmp));
+
+  size_t L = k - p + 1;
+  for (size_t j = 1; j <= r; ++j, ++L) {
+    for (size_t i = 0; i <= p - j - s; ++i) {
+      double alpha = (u - knots[L+i]) / (knots[i+k+1] - knots[L+i]);
+      for (size_t l = 0; l < ncol; ++l)
+        tmp[i*ncol+l] = tmp[(i+1)*ncol+l] * alpha + tmp[i*ncol+l] * (1.0 - alpha);
+    }
+    for (size_t l = 0; l < ncol; ++l) {
+      result.cp_[L*ncol+l] = tmp[l];
+      result.cp_[(k+r-j-s)*ncol+l] = tmp[(p-j-s)*ncol+l];
+    }
+  }
+  if (p > s + r + 1)
+    std::copy_n(tmp.begin() + ncol, (p - s - 1 - r) * ncol, result.cp_.begin() + L * ncol);
+
+  return result;
+}
+
+BSSurface
+BSSurface::insertKnotV(double v, size_t k, size_t s, size_t r) const {
+  auto copy = *this;
+  copy.swapUV();
+  auto result = copy.insertKnotU(v, k, s, r);
+  result.swapUV();
+  return result;
+}
+
+BSSurface
+BSSurface::insertKnotU(double u, size_t r) const {
+  size_t s;
+  size_t k = basis_u_.findSpanWithMultiplicity(u, s);
+  if (s >= basis_u_.degree())
+    return *this;
+  r = std::min(r, basis_u_.degree() - s);
+  return insertKnotU(u, k, s, r);
+}
+
+BSSurface
+BSSurface::insertKnotV(double v, size_t r) const {
+  size_t s;
+  size_t k = basis_v_.findSpanWithMultiplicity(v, s);
+  if (s >= basis_v_.degree())
+    return *this;
+  r = std::min(r, basis_v_.degree() - s);
+  return insertKnotV(v, k, s, r);
+}
+
 } // namespace Geometry

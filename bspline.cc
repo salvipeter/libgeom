@@ -78,7 +78,7 @@ BSBasis::findSpanWithMultiplicity(double u, size_t &multi) const
   auto range = std::equal_range(knots_.begin(), knots_.end(), u);
   multi = range.second - range.first;
 
-  if (u == knots_[knots_.size()-p_-1])
+  if (u >= knots_[knots_.size()-p_-1])
     return knots_.size() - p_ - 2;
   return (range.second - knots_.begin()) - 1;
 }

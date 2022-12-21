@@ -267,6 +267,7 @@ public:
   const std::list<Triangle> &triangles() const;
   static TriMesh readOBJ(std::string filename);
   void writeOBJ(std::string filename) const;
+  void writeSTL(std::string filename) const;
 
   const Triangle &closestTriangle(const Point3D &p) const;
   Point3D projectToTriangle(const Point3D &p, const Triangle &tri) const;

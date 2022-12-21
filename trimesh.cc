@@ -203,6 +203,36 @@ TriMesh::writeOBJ(std::string filename) const {
     f << "f " << t[0] + 1 << ' ' << t[1] + 1 << ' ' << t[2] + 1 << std::endl;
 }
 
+template<typename T>
+static void writeType(std::ostream &os, T x) {
+  os.write(reinterpret_cast<const char *>(&x), sizeof(T));
+}
+
+static void writeVector(std::ostream &os, const Vector3D &v) {
+  writeType<float>(os, v[0]);
+  writeType<float>(os, v[1]);
+  writeType<float>(os, v[2]);
+}
+
+void
+TriMesh::writeSTL(std::string filename) const {
+  std::ofstream f(filename, std::ios::binary);
+  f.exceptions(std::ios::failbit | std::ios::badbit);
+  std::string comment("libgeom export");
+  comment.resize(80, ' ');
+  f.write(comment.c_str(), 80);
+  writeType<uint32_t>(f, triangles_.size());
+  for (const auto &tri : triangles_) {
+    const auto &p0 = points_[tri[0]], &p1 = points_[tri[1]], &p2 = points_[tri[2]];
+    auto normal = ((p1 - p0) ^ (p2 - p0)).normalize();
+    writeVector(f, normal);
+    writeVector(f, p0);
+    writeVector(f, p1);
+    writeVector(f, p2);
+    writeType<uint16_t>(f, 0);
+  };
+}
+
 TriMesh &
 TriMesh::append(const TriMesh &other) {
   size_t n = points_.size();

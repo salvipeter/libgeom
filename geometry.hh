@@ -113,7 +113,8 @@ class Matrix3x3 {
 public:
   // Constructors
   Matrix3x3() = default;
-  explicit Matrix3x3(const double *values); // row-major
+  explicit Matrix3x3(const double *values);        // row-major
+  Matrix3x3(std::initializer_list<double> values); // row-major
 
   // Special matrices
   static Matrix3x3 identity();

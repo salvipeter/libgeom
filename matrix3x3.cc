@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 #include "geometry.hh"
 
@@ -7,6 +8,12 @@ namespace Geometry {
 
 Matrix3x3::Matrix3x3(const double *values) {
   std::copy_n(values, 9, m_.begin());
+}
+
+Matrix3x3::Matrix3x3(std::initializer_list<double> values) {
+  if (values.size() != 9)
+    throw std::invalid_argument("Matrix3x3 needs 9 values");
+  std::copy(values.begin(), values.end(), m_.begin());
 }
 
 Matrix3x3

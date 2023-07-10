@@ -26,7 +26,6 @@ using Point2DVector = std::vector<Point2D>;
 using Point2DMatrix = std::vector<Point2DVector>;
 using PointVector = std::vector<Point3D>;
 using PointMatrix = std::vector<PointVector>;
-using CurveVector = std::vector<std::shared_ptr<BSCurve>>;
 
 class Vector2D {
 public:

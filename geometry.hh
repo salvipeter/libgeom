@@ -108,6 +108,40 @@ private:
 std::ostream &operator<<(std::ostream &os, const Vector3D &v);
 std::istream &operator>>(std::istream &is, Vector3D &v);
 
+class Matrix2x2 {
+public:
+  // Constructors
+  Matrix2x2() = default;
+  explicit Matrix2x2(const double *values);        // row-major
+  Matrix2x2(std::initializer_list<double> values); // row-major
+
+  // Special matrices
+  static Matrix2x2 identity();
+  static Matrix2x2 rotation(double angle);
+
+  const double &operator()(size_t i, size_t j) const;
+  double &operator()(size_t i, size_t j);
+  const double *data() const;
+
+  // Arithmetic
+  Matrix2x2 operator+(const Matrix2x2 &m) const;
+  Matrix2x2 &operator+=(const Matrix2x2 &m);
+  Matrix2x2 operator*(double x) const;
+  Matrix2x2 &operator*=(double x);
+  Vector2D operator*(const Vector2D &v) const;
+  Matrix2x2 operator*(const Matrix2x2 &m) const;
+  Matrix2x2 &operator*=(const Matrix2x2 &m);
+
+  double trace() const;
+  double determinant() const;
+  Matrix2x2 adjugate() const;
+  Matrix2x2 transpose() const;
+  Matrix2x2 inverse() const;
+
+private:
+  std::array<double, 4> m_;
+};
+
 class Matrix3x3 {
 public:
   // Constructors
@@ -133,7 +167,9 @@ public:
   Matrix3x3 &operator*=(const Matrix3x3 &m);
 
   double trace() const;
+  double determinant() const;
   Matrix3x3 adjugate() const;
+  Matrix3x3 transpose() const;
   Matrix3x3 inverse() const;
 
 private:

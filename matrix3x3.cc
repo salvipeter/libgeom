@@ -103,6 +103,11 @@ double Matrix3x3::trace() const {
   return m_[0] + m_[4] + m_[8];
 }
 
+double Matrix3x3::determinant() const {
+  return m_[0] * m_[4] * m_[8] + m_[1] * m_[5] * m_[6] + m_[2] * m_[3] * m_[7] -
+    (m_[0] * m_[5] * m_[7] + m_[1] * m_[3] * m_[8] + m_[2] * m_[4] * m_[6]);
+}
+
 Matrix3x3 Matrix3x3::adjugate() const {
   Matrix3x3 r;
 
@@ -118,6 +123,14 @@ Matrix3x3 Matrix3x3::adjugate() const {
   r.m_[7] = m_[1] * m_[6] - m_[0] * m_[7];
   r.m_[8] = m_[0] * m_[4] - m_[1] * m_[3];
 
+  return r;
+}
+
+Matrix3x3 Matrix3x3::transpose() const {
+  Matrix3x3 r = *this;
+  std::swap(r.m_[1], r.m_[3]);
+  std::swap(r.m_[2], r.m_[6]);
+  std::swap(r.m_[5], r.m_[7]);
   return r;
 }
 

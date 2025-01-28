@@ -116,6 +116,7 @@ public:
   Matrix2x2(std::initializer_list<double> values); // row-major
 
   // Special matrices
+  static Matrix2x2 zero();
   static Matrix2x2 identity();
   static Matrix2x2 rotation(double angle);
 
@@ -150,6 +151,7 @@ public:
   Matrix3x3(std::initializer_list<double> values); // row-major
 
   // Special matrices
+  static Matrix3x3 zero();
   static Matrix3x3 identity();
   static Matrix3x3 rotation(const Vector3D &axis, double angle);
 

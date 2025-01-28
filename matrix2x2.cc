@@ -17,6 +17,13 @@ Matrix2x2::Matrix2x2(std::initializer_list<double> values) {
 }
 
 Matrix2x2
+Matrix2x2::zero() {
+  Matrix2x2 Z;
+  Z.m_.fill(0.0);
+  return Z;
+}
+
+Matrix2x2
 Matrix2x2::identity() {
   Matrix2x2 I;
   I.m_[0] = 1.0;

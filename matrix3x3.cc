@@ -17,6 +17,13 @@ Matrix3x3::Matrix3x3(std::initializer_list<double> values) {
 }
 
 Matrix3x3
+Matrix3x3::zero() {
+  Matrix3x3 Z;
+  Z.m_.fill(0.0);
+  return Z;
+}
+
+Matrix3x3
 Matrix3x3::identity() {
   Matrix3x3 I;
   I.m_.fill(0.0);

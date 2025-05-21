@@ -1,6 +1,7 @@
 #include "geometry.hh"
 
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <sstream>
